@@ -120,6 +120,7 @@ def _memory_maze(
             'target_vec': 'target_vec',
             'target_pos': 'target_pos',
             'maze_layout': 'maze_layout',
+            'dummy_target_pos': 'dummy_target_pos',
         })
 
     env = RemapObservationWrapper(env, obs_mapping)

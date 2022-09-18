@@ -75,6 +75,7 @@ class MemoryMazeTask(random_goal_maze.NullGoalMaze):
         self._current_target_ix = 0
         self._rewarded_this_step = False
         self._targets_obtained = 0
+        self._dummy_target_coord = np.array([0.5, 0.5])
 
         if enable_global_task_observables:
             # Add egocentric vectors to targets
@@ -108,6 +109,12 @@ class MemoryMazeTask(random_goal_maze.NullGoalMaze):
         self._task_observables['target_color'] = observable_lib.Generic(_current_target_color)
         self._task_observables['target_color'].enabled = True
 
+        def _dummy_target_coord(_):
+            return self._dummy_target_coord
+
+        self._task_observables['dummy_target_pos'] = observable_lib.Generic(_dummy_target_coord)
+        self._task_observables['dummy_target_pos'].enabled = True
+
         self._walker.observables.egocentric_camera.height = camera_resolution
         self._walker.observables.egocentric_camera.width = camera_resolution
         self._maze_arena.observables.top_camera.height = camera_resolution
@@ -131,6 +138,7 @@ class MemoryMazeTask(random_goal_maze.NullGoalMaze):
                 continue
             break
         self._pick_new_target(rng)
+        self._pick_new_dummy_target(rng)
 
     def initialize_episode(self, physics, rng: RandomState):
         super().initialize_episode(physics, rng)
@@ -140,13 +148,25 @@ class MemoryMazeTask(random_goal_maze.NullGoalMaze):
     def after_step(self, physics, rng: RandomState):
         super().after_step(physics, rng)
         self._rewarded_this_step = False
+        # Normal target (disable reward, but still change prompt)
         for i, target in enumerate(self._targets):
             if target.activated:
                 if i == self._current_target_ix:
-                    self._rewarded_this_step = True
+                    # self._rewarded_this_step = True  # Disable actual reward
                     self._targets_obtained += 1
                     self._pick_new_target(rng)
                 target.reset(physics)  # Resets activated=False
+        # Dummy target
+        # Replicating AgentPositionWrapper
+        maze_xy_scale, maze_width, maze_height = self._maze_arena.xy_scale, self._maze_arena.maze.width, self._maze_arena.maze.height
+        center_ji = np.array([maze_width - 2.0, maze_height - 2.0]) / 2.0
+        absolute_position = np.array(self.task_observables['absolute_position'](physics))
+        walker_xy = absolute_position[:2]
+        walker_ji = walker_xy / maze_xy_scale + center_ji
+        target_ji = self._dummy_target_coord
+        if int(walker_ji[0]) == int(target_ji[0]) and int(walker_ji[1]) == int(target_ji[1]):
+            self._rewarded_this_step = True  # New dummy reward
+            self._pick_new_dummy_target(rng)
 
     def should_terminate_episode(self, physics):
         return super().should_terminate_episode(physics)
@@ -173,6 +193,16 @@ class MemoryMazeTask(random_goal_maze.NullGoalMaze):
                 continue  # Skip the target that the agent is touching
             self._current_target_ix = ix
             break
+
+    def _pick_new_dummy_target(self, rng: RandomState):
+        while True:
+            n = len(self._maze_arena._maze._entity_layer) - 2
+            ix = rng.randint(n)
+            iy = rng.randint(n)
+            self._dummy_target_coord = np.array([1.0 * ix + 0.5, 1.0 * iy + 0.5])
+            char = self._maze_arena._maze._entity_layer[-2 - iy, ix + 1]
+            if (char == ' ') | (char == 'P') | (char == 'G'):
+                break
 
 
 class FixedWallTexture(labmaze_textures.WallTextures):

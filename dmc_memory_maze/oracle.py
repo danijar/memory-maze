@@ -12,7 +12,7 @@ class PathToTargetWrapper(ObservationWrapper):
         spec = self.env.observation_spec()
         assert isinstance(spec, dict)
         assert 'agent_pos' in spec
-        assert 'target_pos' in spec
+        assert 'dummy_target_pos' in spec
         assert 'maze_layout' in spec
         return spec
 
@@ -21,7 +21,7 @@ class PathToTargetWrapper(ObservationWrapper):
         # Find shortest path (in gridworld) from agent to target
         maze = obs['maze_layout']
         start = tuple(obs['agent_pos'].astype(int))
-        finish = tuple(obs['target_pos'].astype(int))
+        finish = tuple(obs['dummy_target_pos'].astype(int))
         path = breadth_first_search(maze, start, finish)
         if path:
             for x, y in path:
