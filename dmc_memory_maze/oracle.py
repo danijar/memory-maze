@@ -49,7 +49,7 @@ class DrawMinimapWrapper(ObservationWrapper):
         dx, dy = obs['agent_dir']
         angle = np.arctan2(dx, dy)
         N = maze.shape[0]
-        SIZE = N * 2
+        SIZE = N * 4
 
         # Draw map
         map = np.zeros((N, N, 3), np.uint8)  # walls in black
