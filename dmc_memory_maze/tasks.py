@@ -26,11 +26,11 @@ def memory_maze_9x9(**kwargs):
 
 
 def memory_maze_11x11(**kwargs):
-    return _memory_maze(11, 4, 500, **kwargs)
+    return _memory_maze(11, 4, 250, **kwargs)
 
 
 def memory_maze_13x13(**kwargs):
-    return _memory_maze(13, 5, 750, **kwargs)
+    return _memory_maze(13, 5, 250, **kwargs)
 
 
 def memory_maze_15x15(**kwargs):
@@ -44,7 +44,7 @@ def memory_maze_15x15(**kwargs):
         roomMaxSize = 3,
     }
     """
-    return _memory_maze(15, 6, 1000, max_rooms=9, room_max_size=3, **kwargs)
+    return _memory_maze(15, 6, 250, max_rooms=9, room_max_size=3, **kwargs)
 
 
 def _memory_maze(
