@@ -1,6 +1,8 @@
 from collections import deque
 from typing import List, Optional, Tuple
+
 import numpy as np
+from dm_env import specs
 
 from dmc_memory_maze.wrappers import ObservationWrapper
 
@@ -38,6 +40,7 @@ class DrawMinimapWrapper(ObservationWrapper):
         assert 'maze_layout' in spec
         assert 'image' in spec
         assert 'agent_dir' in spec
+        spec['minimap'] = spec['image'].replace(name='minimap')  # use the same dimensions for minimap as image
         return spec
 
     def observation(self, obs):
@@ -69,9 +72,11 @@ class DrawMinimapWrapper(ObservationWrapper):
                                   resample=0)
         mapimg = mapimg.rotate(angle / np.pi * 180, resample=0)
 
-        # Overlay minimap onto observation image top-right corner
-        img = obs['image']
-        img[:SIZE, -SIZE:] = img[:SIZE, -SIZE:] // 2 + np.array(mapimg) // 2
+        # Draw separate minimap image. It will fill the top-right (SIZE,SIZE) corner or
+        # observation-sized image, so that they can be overlayed or concatenated over channels.
+        img = np.zeros_like(obs['image'])
+        img[:SIZE, -SIZE:] = np.array(mapimg)[:SIZE, -SIZE:]
+        obs['minimap'] = img
         return obs
 
 
